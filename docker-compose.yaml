@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:15
+    container_name: radius-db
+    restart: always
+    environment:
+      - POSTGRES_DB=radius
+      - POSTGRES_USER=radius
+      - POSTGRES_PASSWORD=radiuspassword
+    volumes:
+      - ./radius-schema:/radius-schema:ro
+      # - ./postgres_data:/var/lib/postgresql/data
+
+  freeradius:
+    image: ghcr.io/nyuuk/free-radius-server:3.2.8
+    container_name: freeradius-server
+    depends_on:
+      - db
+    ports:
+      - "1812:1812/udp"
+      - "1813:1813/udp"
+    volumes:
+      - ./config/clients.conf:/etc/raddb/clients.conf
+      - ./config/sql:/etc/raddb/mods-enabled/sql
+    environment:
+      - RADIUS_DEBUG=yes

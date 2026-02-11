@@ -1,0 +1,33 @@
+# Lokasi: /etc/raddb/mods-available/sql
+
+sql {
+    driver = "rlm_sql_postgresql"
+    dialect = "postgresql"
+
+    # --- Koneksi Database ---
+    # Jika menggunakan docker-compose, 'server' adalah nama service database
+    server = "db" 
+    port = 5432
+    login = "radius"
+    password = "radiuspassword"
+    radius_db = "radius"
+
+    # --- Pengaturan Tabel ---
+    # Nama tabel standar (default skema FreeRADIUS)
+    client_table = "nas"
+    
+    # Izinkan pembacaan client (router) dari database (opsional)
+    read_clients = yes
+
+    # --- Logika Pool & Session ---
+    pool {
+        start = ${thread[pool].start_servers}
+        min = ${thread[pool].min_spare_servers}
+        max = ${thread[pool].max_servers}
+        spare = ${thread[pool].max_spare_servers}
+        uses = 0
+        retry_delay = 30
+        lifetime = 0
+        idle_timeout = 60
+    }
+}
