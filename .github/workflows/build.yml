@@ -32,12 +32,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Tag from Release Input
-        id: extract_tag
+      - name: Extract Tag and Repository Info
+        id: prep
         run: |
           # Extract version from release_3_2_8 -> 3.2.8
           TAG=$(echo "${{ github.event.inputs.release }}" | sed 's/release_//' | sed 's/_/./g')
+          
+          # Docker repository name must be lowercase
+          REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          
           echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "owner=$REPO_OWNER" >> $GITHUB_OUTPUT
 
       - name: Build and Push
         uses: docker/build-push-action@v5
@@ -49,8 +54,8 @@ jobs:
             release=${{ github.event.inputs.release }}
             source=https://github.com/FreeRADIUS/freeradius-server.git
           tags: |
-            ghcr.io/${{ github.repository_owner }}/free-radius-server:${{ steps.extract_tag.outputs.tag }}
-            ghcr.io/${{ github.repository_owner }}/free-radius-server:latest
+            ghcr.io/${{ steps.prep.outputs.owner }}/free-radius-server:${{ steps.prep.outputs.tag }}
+            ghcr.io/${{ steps.prep.outputs.owner }}/free-radius-server:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
