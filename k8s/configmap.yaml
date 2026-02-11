@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: radius-config
+  namespace: free-radius
+  labels:
+    app: free-radius
+    env: production
+    tier: backend
+data:
+  clients.conf: |
+    # Definisi untuk Router Mikrotik
+    client mikrotik_utama {
+        ipaddr      = 0.0.0.0/0
+        secret      = testing123      # Sesuaikan secret ini
+        nas_type    = other
+        shortname   = hotspot-pusat
+    }
+
+    client localhost {
+        ipaddr      = 127.0.0.1
+        secret      = ${RADIUS_LOCALHOST_SECRET}
+    }
+
+  sql: |
+    sql {
+        driver = "rlm_sql_postgresql"
+        dialect = "postgresql"
+
+        server = "${DB_HOST}"
+        port = ${DB_PORT}
+        login = "${DB_USER}"
+        password = "${DB_PASSWORD}"
+        radius_db = "${DB_NAME}"
+
+        client_table = "nas"
+        read_clients = yes
+
+        pool {
+            start = ${thread[pool].start_servers}
+            min = ${thread[pool].min_spare_servers}
+            max = ${thread[pool].max_servers}
+            spare = ${thread[pool].max_spare_servers}
+            uses = 0
+            retry_delay = 30
+            lifetime = 0
+            idle_timeout = 60
+        }
+    }

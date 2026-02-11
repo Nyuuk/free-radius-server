@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: freeradius
+  namespace: free-radius
+  labels:
+    app: free-radius
+    env: production
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: free-radius
+  template:
+    metadata:
+      labels:
+        app: free-radius
+    spec:
+      containers:
+      - name: freeradius
+        image: ghcr.io/nyuuk/free-radius-server:3.2.8
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: RADIUS_DEBUG
+          value: "yes"
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: radius-db-secret
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: radius-db-secret
+              key: DB_PORT
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: radius-db-secret
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: radius-db-secret
+              key: DB_PASSWORD
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: radius-db-secret
+              key: DB_NAME
+        - name: RADIUS_LOCALHOST_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: radius-db-secret
+              key: RADIUS_LOCALHOST_SECRET
+        ports:
+        - containerPort: 1812
+          name: radius-auth
+          protocol: UDP
+        - containerPort: 1813
+          name: radius-acct
+          protocol: UDP
+        volumeMounts:
+        - name: config-clients
+          mountPath: /etc/raddb/clients.conf
+          subPath: clients.conf
+        - name: config-sql
+          mountPath: /etc/raddb/mods-enabled/sql
+          subPath: sql
+      volumes:
+      - name: config-clients
+        configMap:
+          name: radius-config
+          items:
+          - key: clients.conf
+            path: clients.conf
+      - name: config-sql
+        configMap:
+          name: radius-config
+          items:
+          - key: sql
+            path: sql
